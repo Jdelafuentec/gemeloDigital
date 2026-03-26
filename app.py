@@ -33,7 +33,8 @@ def simulate_with_retry(fmu_path, start_values, outputs, stop_time, interval):
                 output_interval=interval,
                 start_values=current_values,
                 output=outputs,
-                relative_tolerance=1e-3, # Relaja la tolerancia del solver (de 1e-8 a 1e-3)
+                relative_tolerance=1e-5, # Balance ideal para evitar fmi2Error y mxstep
+                record_events=False,     # Previene que OpenModelica colapse en discontinuidades
             )
             return result, current_values
         except Exception as exc:
@@ -86,7 +87,7 @@ else:
             try:
                 # Configuración técnica
                 STOP_TIME = 72 * 3600
-                OUTPUT_INTERVAL = 60 # 1 minuto (ya no hace falta downsample porque relajamos la tolerancia)
+                OUTPUT_INTERVAL = 10.0 # 10 segundos, no sobrecarga CVode y rinde bien en graficos
                 CANDIDATE_OUTPUTS = [
                     "SenTempIn_cold.T", "senTemOut_cold.T", 
                     "senTemIn_heat.T", "senTemOut_heat.T",
