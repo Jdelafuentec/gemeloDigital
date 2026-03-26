@@ -33,8 +33,8 @@ def simulate_with_retry(fmu_path, start_values, outputs, stop_time, interval):
                 output_interval=interval,
                 start_values=current_values,
                 output=outputs,
-                relative_tolerance=1e-5, # Balance ideal para evitar fmi2Error y mxstep
-                record_events=False,     # Previene que OpenModelica colapse en discontinuidades
+                relative_tolerance=1e-4, # Balance seguro para simulaciones térmicas
+                record_events=False,
             )
             return result, current_values
         except Exception as exc:
@@ -87,7 +87,7 @@ else:
             try:
                 # Configuración técnica
                 STOP_TIME = 72 * 3600
-                OUTPUT_INTERVAL = 10.0 # 10 segundos, no sobrecarga CVode y rinde bien en graficos
+                OUTPUT_INTERVAL = 1.0 # Extremadamente pequeño para que CVode no traba en "mxstep"
                 CANDIDATE_OUTPUTS = [
                     "SenTempIn_cold.T", "senTemOut_cold.T", 
                     "senTemIn_heat.T", "senTemOut_heat.T",
@@ -102,8 +102,9 @@ else:
                 # Simular
                 result, applied = simulate_with_retry(FMU_PATH, START_VALUES, outputs, STOP_TIME, OUTPUT_INTERVAL)
                 
-                # Procesar datos
-                df = pd.DataFrame({name: result[name] for name in result.dtype.names})
+                # Procesar datos y desmuestrear directamente desde numpy (1 dato por minuto)
+                salto = int(60.0 / OUTPUT_INTERVAL)
+                df = pd.DataFrame({name: result[name][::salto] for name in result.dtype.names})
                 df["Hora"] = df["time"] / 3600.0
                 
                 # Convertir a Celsius
