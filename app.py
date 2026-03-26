@@ -2,6 +2,8 @@ import streamlit as st
 from pathlib import Path
 import re
 import pandas as pd
+import platform
+import shutil
 import matplotlib.pyplot as plt
 from fmpy import simulate_fmu, read_model_description
 
@@ -80,6 +82,37 @@ FMU_PATH = Path("pump_v3_basicCold_t.fmu")
 if not FMU_PATH.exists():
     st.error(f"Archivo {FMU_PATH.name} no encontrado. Por favor súbelo al repositorio.")
 else:
+    # ------------------
+    # COMPILACIÓN AUTOMÁTICA EN LINUX
+    # ------------------
+    linux_dir = FMU_PATH / "binaries" / "linux64"
+    if platform.system() == "Linux" and not linux_dir.exists():
+        with st.spinner("🔧 Compilando dependencias C para Streamlit (esto ocurre solo una vez tras reiniciar el servidor)..."):
+            try:
+                # Crear un archivo temp.fmu temporar
+                shutil.make_archive("temp_fmu", "zip", str(FMU_PATH))
+                if Path("temp.fmu").exists():
+                    Path("temp.fmu").unlink()
+                shutil.move("temp_fmu.zip", "temp.fmu")
+                
+                from fmpy.util import compile_platform_binary
+                compile_platform_binary("temp.fmu")
+                
+                import zipfile
+                with zipfile.ZipFile("temp.fmu", 'r') as zf:
+                     zf.extractall("temp_extracted")
+                
+                shutil.copytree("temp_extracted/binaries/linux64", str(linux_dir))
+                st.success("✅ Compilación en la nube exitosa. Procediendo con la simulación.")
+            except Exception as e:
+                st.error(f"Error compilando el FMU: {e}")
+            finally:
+                # Limpieza de archivos temporales
+                if Path("temp.fmu").exists():
+                    Path("temp.fmu").unlink()
+                if Path("temp_extracted").exists():
+                    shutil.rmtree("temp_extracted")
+                    
     if st.sidebar.button("🚀 Ejecutar Simulación"):
         with st.spinner("Simulando 72 horas de operación..."):
             try:
