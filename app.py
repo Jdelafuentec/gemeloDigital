@@ -75,7 +75,7 @@ START_VALUES = {
 }
 
 # --- EJECUCIÓN DE LA SIMULACIÓN ---
-FMU_PATH = Path("pump_v3_basicCold_t.fmu")
+FMU_PATH = Path("pump_v3_basicCold_t_linux.fmu")
 
 if not FMU_PATH.exists():
     st.error(f"Archivo {FMU_PATH.name} no encontrado. Por favor súbelo al repositorio.")
