@@ -85,7 +85,7 @@ else:
             try:
                 # Configuración técnica
                 STOP_TIME = 72 * 3600
-                OUTPUT_INTERVAL = 0.5 # Aumentado ligeramente para rapidez en web
+                OUTPUT_INTERVAL = 600 # 10 minutos para que corra MUY rápido en web
                 CANDIDATE_OUTPUTS = [
                     "SenTempIn_cold.T", "senTemOut_cold.T", 
                     "senTemIn_heat.T", "senTemOut_heat.T",
