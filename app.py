@@ -85,7 +85,7 @@ else:
             try:
                 # Configuración técnica
                 STOP_TIME = 72 * 3600
-                OUTPUT_INTERVAL = 600 # 10 minutos para que corra MUY rápido en web
+                OUTPUT_INTERVAL = 5.0 # Pasos cortos para evitar error CVode de "mxstep"
                 CANDIDATE_OUTPUTS = [
                     "SenTempIn_cold.T", "senTemOut_cold.T", 
                     "senTemIn_heat.T", "senTemOut_heat.T",
@@ -108,18 +108,21 @@ else:
                 for col in [c for c in df.columns if c.endswith(".T")]:
                     df[col.replace(".T", " (°C)")] = df[col] - 273.15
 
+                # Desmuestreo (downsampling) de 1 dato por minuto (cada 12 pasos de 5s) para gráficos rápidos
+                df_plot = df.iloc[::12, :]
+
                 # --- VISUALIZACIÓN ---
                 col1, col2 = st.columns(2)
 
                 with col1:
                     st.subheader("Gráfico de Temperaturas")
-                    temp_cols = [c for c in df.columns if " (°C)" in c]
-                    st.line_chart(df.set_index("Hora")[temp_cols])
+                    temp_cols = [c for c in df_plot.columns if " (°C)" in c]
+                    st.line_chart(df_plot.set_index("Hora")[temp_cols])
 
                 with col2:
                     st.subheader("Balance Energético (W)")
-                    q_cols = [c for c in ["Q_cold_W", "Q_heat_total_W"] if c in df.columns]
-                    st.area_chart(df.set_index("Hora")[q_cols])
+                    q_cols = [c for c in ["Q_cold_W", "Q_heat_total_W"] if c in df_plot.columns]
+                    st.area_chart(df_plot.set_index("Hora")[q_cols])
 
                 # Métricas finales
                 st.divider()
